@@ -17,21 +17,11 @@ function GameScreen() {
     const crosshairRef = useRef<HTMLImageElement>(null);
     const [gameStart, setGameStart] = useState(false);
     const [gameOver, setGameOver] = useState(false);
-    const [gamePause, setGamePause] = useState(false);
     const [level, setLevel] = useState(1);
     const [points, setPoints] = useState(0);
     const [gameState, setGameState] = useState<Circle[]>([]);
 
     useEffect(() => {
-
-        EventsOn('game-pause', (..._data: any) => {
-            setGamePause(true)
-        })
-
-        EventsOn('game-resume', (..._data: any) => {
-            setGamePause(false)
-        })
-
         const canvas = canvasRef.current;
         if (!canvas) return;
 
@@ -83,10 +73,6 @@ function GameScreen() {
         canvas.addEventListener("mousemove", handleMouseMove);
 
         const handleClick = (event: MouseEvent) => {
-            if (gamePause) {
-                return;
-            }
-
             if (!gameStart || gameOver) {
                 EventsEmit('game-started');
                 setGameStart(true);
@@ -120,10 +106,6 @@ function GameScreen() {
         canvas.addEventListener("click", handleClick);
 
         const animationFrameCallback = (timestamp: number) => {
-            if (gamePause) {
-                return;
-            }
-
             let delta = timestamp - lastTimestamp;
             if (delta > 100) delta = 16.67;
             fps = 1000 / delta;
@@ -194,7 +176,7 @@ function GameScreen() {
             canvas.removeEventListener("click", handleClick);
             canvas.removeEventListener("mousemove", handleMouseMove);
         };
-    }, [gameStart, gamePause, gameOver, level, points, gameState]);
+    }, [gameStart, gameOver, level, points, gameState]);
 
     return (
         <>

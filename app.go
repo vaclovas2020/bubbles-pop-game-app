@@ -41,8 +41,6 @@ func (a *App) beforeClose(ctx context.Context) (prevent bool) {
 		return false
 	}
 
-	runtime.EventsEmit(a.ctx, "game-pause")
-
 	dialog, err := runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
 		Type:          runtime.QuestionDialog,
 		Title:         "Confirm Exit",
@@ -55,10 +53,6 @@ func (a *App) beforeClose(ctx context.Context) (prevent bool) {
 		println("Error:", err.Error())
 
 		return false
-	}
-
-	if dialog == "No" {
-		runtime.EventsEmit(a.ctx, "game-resume")
 	}
 
 	return dialog != "Yes"
