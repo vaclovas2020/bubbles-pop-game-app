@@ -11,6 +11,7 @@ import (
 type App struct {
 	ctx         context.Context
 	gameStarted bool
+	gameOver    bool
 }
 
 // NewApp creates a new App application struct
@@ -23,16 +24,24 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.gameStarted = false
+	a.gameOver = false
 
 	runtime.EventsOn(a.ctx, "game-started", func(optionalData ...any) {
+		a.gameOver = false
 		a.gameStarted = true
+	})
+
+	runtime.EventsOn(a.ctx, "game-over", func(optionalData ...any) {
+		a.gameOver = true
 	})
 }
 
 func (a *App) beforeClose(ctx context.Context) (prevent bool) {
-	if !a.gameStarted {
+	if !a.gameStarted || a.gameOver {
 		return false
 	}
+
+	runtime.EventsEmit(a.ctx, "game-pause")
 
 	dialog, err := runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
 		Type:          runtime.QuestionDialog,
@@ -46,6 +55,10 @@ func (a *App) beforeClose(ctx context.Context) (prevent bool) {
 		println("Error:", err.Error())
 
 		return false
+	}
+
+	if dialog == "No" {
+		runtime.EventsEmit(a.ctx, "game-resume")
 	}
 
 	return dialog != "Yes"

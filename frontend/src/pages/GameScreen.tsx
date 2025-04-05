@@ -1,17 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 import crosshair from './../assets/images/crosshair.png';
-import { EventsEmit } from "../../wailsjs/runtime";
+import { EventsEmit, EventsOn } from "../../wailsjs/runtime";
 
 function GameScreen() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const crosshairRef = useRef<HTMLImageElement>(null);
-    const [gameOver, setGameOver] = useState(false);
     const [gameStart, setGameStart] = useState(false);
+    const [gameOver, setGameOver] = useState(false);
     const [gamePause, setGamePause] = useState(false);
     const [level, setLevel] = useState(1);
     const [points, setPoints] = useState(0);
 
     useEffect(() => {
+
+        EventsOn('game-pause', (..._data: any) => {
+            setGamePause(true)
+        })
+
+        EventsOn('game-resume', (..._data: any) => {
+            setGamePause(false)
+        })
+
         const canvas = canvasRef.current;
         if (!canvas) return;
 
@@ -68,14 +77,15 @@ function GameScreen() {
         canvas.addEventListener("mousemove", handleMouseMove);
 
         const handleClick = (event: MouseEvent) => {
-            if (!gameStart) {
-                EventsEmit('game-started');
-                setGameStart(true);
-
+            if (gamePause) {
                 return;
             }
 
-            if (gamePause) {
+            if (!gameStart || gameOver) {
+                EventsEmit('game-started');
+                setGameStart(true);
+                setGameOver(false);
+
                 return;
             }
 
@@ -88,11 +98,11 @@ function GameScreen() {
                 const dist = Math.hypot(c.x - clickX, c.y - clickY);
                 if (dist <= c.radius) {
                     circles.splice(i, 1);
-                    setPoints(points + 1);
                 }
             }
 
             if (circles.length === 0 && level < 100) {
+                setPoints(points + (level * 10));
                 setLevel(level + 1);
                 createCircles();
             }
@@ -116,13 +126,15 @@ function GameScreen() {
             if (!gameStart) {
                 ctx.fillStyle = "#ffffff";
                 ctx.font = "28px monospace";
-                ctx.fillText("Press anywhere to start the game", canvas.width / 2 - 120, canvas.height / 2);
+                ctx.fillText("Press anywhere to start the game", canvas.width / 2 - 250, canvas.height / 2);
             }
 
             if (gamePause) {
                 ctx.fillStyle = "#ffffff";
-                ctx.font = "28px monospace";
+                ctx.font = "48px monospace";
                 ctx.fillText("Pause", canvas.width / 2 - 120, canvas.height / 2);
+
+                return;
             }
 
 
@@ -170,12 +182,17 @@ function GameScreen() {
                 ctx.fillStyle = "#ffffff";
                 ctx.font = "48px monospace";
                 ctx.fillText("Game Over", canvas.width / 2 - 120, canvas.height / 2);
+                EventsEmit('game-over');
             }
 
-            requestAnimationFrame(animationFrameCallback);
+            if (!gamePause) {
+                requestAnimationFrame(animationFrameCallback);
+            }
         };
 
-        requestAnimationFrame(animationFrameCallback);
+        if (!gamePause) {
+            requestAnimationFrame(animationFrameCallback);
+        }
 
         return () => {
             canvas.removeEventListener("click", handleClick);
