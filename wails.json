@@ -1,0 +1,20 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "Bubbles Pop Game",
+  "info": {
+    "productName": "Bubbles Pop Game",
+    "productVersion": "1.0.0",
+    "companyName": "Vaclovas Lapinskis",
+    "copyright": "Copyright (c) 2025 Vaclovas Lapinskis",
+    "comments": "2D Game"
+  },
+  "outputfilename": "bubbles-pop-game-app",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "vaclovas2020",
+    "email": "vaclovas.lapinskis@gmail.com"
+  }
+}
