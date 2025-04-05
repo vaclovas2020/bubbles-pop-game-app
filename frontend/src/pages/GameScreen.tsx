@@ -3,6 +3,16 @@ import crosshair from './../assets/images/crosshair.png';
 import { EventsEmit, EventsOn } from "../../wailsjs/runtime";
 
 function GameScreen() {
+
+    type Circle = {
+        x: number;
+        y: number;
+        radius: number;
+        color: string;
+        vx: number;
+        vy: number;
+    };
+
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const crosshairRef = useRef<HTMLImageElement>(null);
     const [gameStart, setGameStart] = useState(false);
@@ -10,6 +20,7 @@ function GameScreen() {
     const [gamePause, setGamePause] = useState(false);
     const [level, setLevel] = useState(1);
     const [points, setPoints] = useState(0);
+    const [gameState, setGameState] = useState<Circle[]>([]);
 
     useEffect(() => {
 
@@ -38,16 +49,7 @@ function GameScreen() {
             return `rgb(${r}, ${g}, ${b})`;
         };
 
-        type Circle = {
-            x: number;
-            y: number;
-            radius: number;
-            color: string;
-            vx: number;
-            vy: number;
-        };
-
-        let circles: Circle[] = [];
+        let circles: Circle[] = gameState;
         const mouse = { x: 0, y: 0 };
 
         const createCircles = () => {
@@ -61,12 +63,16 @@ function GameScreen() {
                 vx: getRandom(-0.1, 0.1),
                 vy: getRandom(-0.1, 0.1),
             }));
+
+            setGameState(circles);
         };
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        createCircles();
+        if (gameState.length == 0) {
+            createCircles();
+        }
 
         const handleMouseMove = (e: MouseEvent) => {
             const rect = canvas.getBoundingClientRect();
@@ -104,7 +110,6 @@ function GameScreen() {
             if (circles.length === 0 && level < 100) {
                 setPoints(points + (level * 10));
                 setLevel(level + 1);
-                createCircles();
             }
 
             if (circles.length === 0 && level == 100) {
@@ -115,6 +120,10 @@ function GameScreen() {
         canvas.addEventListener("click", handleClick);
 
         const animationFrameCallback = (timestamp: number) => {
+            if (gamePause) {
+                return;
+            }
+
             let delta = timestamp - lastTimestamp;
             if (delta > 100) delta = 16.67;
             fps = 1000 / delta;
@@ -129,16 +138,7 @@ function GameScreen() {
                 ctx.fillText("Press anywhere to start the game", canvas.width / 2 - 250, canvas.height / 2);
             }
 
-            if (gamePause) {
-                ctx.fillStyle = "#ffffff";
-                ctx.font = "48px monospace";
-                ctx.fillText("Pause", canvas.width / 2 - 120, canvas.height / 2);
-
-                return;
-            }
-
-
-            if (!gameOver && gameStart && !gamePause) {
+            if (!gameOver && gameStart) {
                 for (const circle of circles) {
                     circle.x += circle.vx * delta;
                     circle.y += circle.vy * delta;
@@ -185,20 +185,16 @@ function GameScreen() {
                 EventsEmit('game-over');
             }
 
-            if (!gamePause) {
-                requestAnimationFrame(animationFrameCallback);
-            }
+            requestAnimationFrame(animationFrameCallback);
         };
 
-        if (!gamePause) {
-            requestAnimationFrame(animationFrameCallback);
-        }
+        requestAnimationFrame(animationFrameCallback);
 
         return () => {
             canvas.removeEventListener("click", handleClick);
             canvas.removeEventListener("mousemove", handleMouseMove);
         };
-    }, [gameStart, gamePause, gameOver, level, points]);
+    }, [gameStart, gamePause, gameOver, level, points, gameState]);
 
     return (
         <>
