@@ -13,6 +13,7 @@ function GameScreen() {
         vy: number;
     };
 
+    const LEVEL_DURATION_STEP = 30000;
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const crosshairRef = useRef<HTMLImageElement>(null);
     const [gameStart, setGameStart] = useState(false);
@@ -21,6 +22,8 @@ function GameScreen() {
     const [points, setPoints] = useState(0);
     const [gameState, setGameState] = useState<Circle[]>([]);
     const [startTime, setStartTime] = useState<Date | null>(null);
+    const [startLevelTime, setStartLevelTime] = useState<Date | null>(null);
+    const [levelDuration, setLevelDuration] = useState<number>(LEVEL_DURATION_STEP);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -81,6 +84,8 @@ function GameScreen() {
                 setLevel(1);
                 let now = new Date();
                 setStartTime(now);
+                setStartLevelTime(now);
+                setLevelDuration(LEVEL_DURATION_STEP);
                 setGameOver(false);
                 createCircles();
 
@@ -102,6 +107,9 @@ function GameScreen() {
             if (circles.length === 0 && level < 100) {
                 setPoints(points + (level * 10));
                 setLevel(level + 1);
+                let now = new Date();
+                setStartLevelTime(now);
+                setLevelDuration((level + 1) * LEVEL_DURATION_STEP);
                 createCircles();
             }
 
@@ -111,6 +119,8 @@ function GameScreen() {
         };
 
         canvas.addEventListener("click", handleClick);
+
+        let myReq: number;
 
         const animationFrameCallback = (timestamp: number) => {
             let delta = timestamp - lastTimestamp;
@@ -150,6 +160,13 @@ function GameScreen() {
 
                 let currentTime: Date = new Date()
                 let totalDurationTime: number = currentTime.getTime() - (startTime?.getTime() || 0);
+                let levelDurationTime: number = currentTime.getTime() - (startLevelTime?.getTime() || 0);
+                let levelRemainingTime: number = levelDuration - levelDurationTime + 1000;
+
+                if (levelRemainingTime <= 0) {
+                    levelRemainingTime = 0;
+                    setGameOver(true);
+                }
 
                 const timer = (d: number): string => {
                     const timeObj = new Date(d);
@@ -169,9 +186,10 @@ function GameScreen() {
                 ctx.fillText(`Points: ${points}`, 10, 60);
                 ctx.fillText(`Level: ${level}`, 10, 80);
                 ctx.fillText(`Duration: ${timer(totalDurationTime)}`, 10, 100);
+                ctx.fillText(`Remaining: ${timer(levelRemainingTime)}`, 10, 120);
             }
 
-            if (crosshairRef.current) {
+            if (crosshairRef.current && !gameOver) {
                 const crosshairSize = 30;
                 ctx.drawImage(
                     crosshairRef.current,
@@ -189,16 +207,17 @@ function GameScreen() {
                 EventsEmit('game-over');
             }
 
-            requestAnimationFrame(animationFrameCallback);
+            myReq = requestAnimationFrame(animationFrameCallback);
         };
 
-        requestAnimationFrame(animationFrameCallback);
+        myReq = requestAnimationFrame(animationFrameCallback);
 
         return () => {
             canvas.removeEventListener("click", handleClick);
             canvas.removeEventListener("mousemove", handleMouseMove);
+            cancelAnimationFrame(myReq);
         };
-    }, [gameStart, gameOver, level, points, gameState, startTime]);
+    }, [gameStart, gameOver, level, points, gameState, startTime, startLevelTime, levelDuration]);
 
     return (
         <>
