@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import crosshair from './../assets/images/crosshair.png';
-import { EventsEmit, EventsOn } from "../../wailsjs/runtime";
+import { EventsEmit } from "../../wailsjs/runtime";
 
 function GameScreen() {
 
@@ -20,6 +20,7 @@ function GameScreen() {
     const [level, setLevel] = useState(1);
     const [points, setPoints] = useState(0);
     const [gameState, setGameState] = useState<Circle[]>([]);
+    const [startTime, setStartTime] = useState<Date | null>(null);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -60,10 +61,6 @@ function GameScreen() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        if (gameState.length == 0) {
-            createCircles();
-        }
-
         const handleMouseMove = (e: MouseEvent) => {
             const rect = canvas.getBoundingClientRect();
             mouse.x = e.clientX - rect.left;
@@ -73,10 +70,19 @@ function GameScreen() {
         canvas.addEventListener("mousemove", handleMouseMove);
 
         const handleClick = (event: MouseEvent) => {
-            if (!gameStart || gameOver) {
+            if (gameOver) {
+                return;
+            }
+
+            if (!gameStart) {
                 EventsEmit('game-started');
                 setGameStart(true);
+                setPoints(0);
+                setLevel(1);
+                let now = new Date();
+                setStartTime(now);
                 setGameOver(false);
+                createCircles();
 
                 return;
             }
@@ -96,6 +102,7 @@ function GameScreen() {
             if (circles.length === 0 && level < 100) {
                 setPoints(points + (level * 10));
                 setLevel(level + 1);
+                createCircles();
             }
 
             if (circles.length === 0 && level == 100) {
@@ -141,12 +148,27 @@ function GameScreen() {
                     ctx.stroke();
                 }
 
+                let currentTime: Date = new Date()
+                let totalDurationTime: number = currentTime.getTime() - (startTime?.getTime() || 0);
+
+                const timer = (d: number): string => {
+                    const timeObj = new Date(d);
+                    let h = timeObj.getUTCHours(), m = timeObj.getUTCMinutes(), s = timeObj.getUTCSeconds()
+
+                    const timeFormatter = (x: number): string => {
+                        return `${(x < 10) ? '0' + x : x}`;
+                    }
+
+                    return `${timeFormatter(h)}:${timeFormatter(m)}:${timeFormatter(s)}`;
+                }
+
                 ctx.fillStyle = "#ffffff";
                 ctx.font = "16px monospace";
                 ctx.fillText(`FPS: ${fps.toFixed(1)}`, 10, 20);
                 ctx.fillText(`Bubbles: ${circles.length}`, 10, 40);
-                ctx.fillText(`Level: ${level}`, 10, 60);
-                ctx.fillText(`Points: ${points}`, 10, 80);
+                ctx.fillText(`Points: ${points}`, 10, 60);
+                ctx.fillText(`Level: ${level}`, 10, 80);
+                ctx.fillText(`Duration: ${timer(totalDurationTime)}`, 10, 100);
             }
 
             if (crosshairRef.current) {
@@ -176,7 +198,7 @@ function GameScreen() {
             canvas.removeEventListener("click", handleClick);
             canvas.removeEventListener("mousemove", handleMouseMove);
         };
-    }, [gameStart, gameOver, level, points, gameState]);
+    }, [gameStart, gameOver, level, points, gameState, startTime]);
 
     return (
         <>
