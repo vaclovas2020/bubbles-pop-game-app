@@ -139,8 +139,19 @@ function GameScreen() {
 
             if (!gameOver && gameStart) {
                 for (const circle of circles) {
-                    circle.x += circle.vx * delta;
-                    circle.y += circle.vy * delta;
+                    let speed =
+                        (level > 1) ?
+                            ((level > 20) ?
+                                ((level > 40) ?
+                                    20 + Math.ceil(level * 0.1) :
+                                    10 + Math.ceil(level * 0.25)
+                                ) :
+                                Math.ceil(level * 0.5)
+                            )
+                            : 1;
+
+                    circle.x += circle.vx * delta * speed;
+                    circle.y += circle.vy * delta * speed;
 
                     if (circle.x - circle.radius < 0 || circle.x + circle.radius > canvas.width) {
                         circle.vx *= -1;
