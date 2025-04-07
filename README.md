@@ -1,10 +1,10 @@
 # README
 
-![Bubble Pop Game](screenshot.png)
+![Bubbles Pop Game](screenshot.png)
 
 ## About
 
-This is the official Bubble Pop Game repository.
+This is the official Bubbles Pop Game repository.
 
 You can configure the project by editing `wails.json`. More information about the project settings can be found
 here: https://wails.io/docs/reference/project-config
