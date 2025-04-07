@@ -2,6 +2,8 @@
 
 ## About
 
+![Bubble Pop Game](screenshot.png)
+
 This is the official Bubble Pop Game repository.
 
 You can configure the project by editing `wails.json`. More information about the project settings can be found
