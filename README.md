@@ -1,8 +1,8 @@
 # README
 
-## About
-
 ![Bubble Pop Game](screenshot.png)
+
+## About
 
 This is the official Bubble Pop Game repository.
 
